@@ -70,7 +70,7 @@ matrix:
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly"
-    addons: {apt: {packages: [clang-3.5, llvm-3.5, libgmp,libgmp-dev]}}
+    addons: {apt: {packages: [clang-3.5, llvm-3.5-dev, libgmp,libgmp-dev]}}
 
   # Build on OS X in addition to Linux
   - env: BUILD=stack ARGS=""
