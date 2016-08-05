@@ -13,8 +13,7 @@ import Phkit.IO (
 
 import Phkit.Phire
 
-import System.Environment (
-  getArgs)
+import System.Environment (getArgs)
 
 import Phkit.Experimental
 
