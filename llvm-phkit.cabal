@@ -2,7 +2,7 @@ name:                llvm-phkit
 version:             0.1.0.0
 synopsis:            A collection of LLVM passes for program hardening.
 description:         Please see README.md
-homepage             https://github.com/zchn/llvm-phkit
+homepage:            https://github.com/zchn/llvm-phkit
 license-file:        LICENSE
 author:              Kevin Chen
 maintainer:          k_@berkeley.edu
