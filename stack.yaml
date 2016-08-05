@@ -1,0 +1,17 @@
+flags:
+  llvm-general:
+    shared-llvm: true
+extra-package-dbs: []
+packages:
+- '.'
+# - location:
+#     git: https://github.com/bscarlet/llvm-general
+#     commit: 61fd03639063283e7dc617698265cc883baf0eec
+#   subdirs:
+#     - llvm-general/
+#     - llvm-general-pure/
+extra-deps:
+- hoopl-3.10.2.1
+- llvm-general-3.5.1.2
+- llvm-general-pure-3.5.1.0
+resolver: lts-6.6
