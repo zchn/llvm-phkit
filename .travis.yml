@@ -135,6 +135,9 @@ before_install:
 - export CC=/usr/bin/gcc-4.8
 - export CXX=/usr/bin/g++-4.8
 
+# Use llvm-config-3.6
+- alias llvm-config=llvm-config-3.6
+
 install:
 - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
 - if [ -f configure.ac ]; then autoreconf -i; fi
