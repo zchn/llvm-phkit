@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs #-}
 
-module Phkit.TransformSpec (spec) where
+module Phkit.FlattenTransformSpec (spec) where
 
 import qualified Compiler.Hoopl as CH
 import qualified Control.Monad as CM
@@ -16,13 +16,14 @@ import Phkit.Analysis
 import Phkit.IO
 import Phkit.TestUtil
 import Phkit.Transform
+import Phkit.FlattenTransform
 
 spec :: Spec
 spec =
-  describe "Hoopl analysis tests" $ do
-    it "does not change between no-op rewrite." $ do
+  describe "Flatten transform tests" $ do
+    it "performs flattening." $ do
       modu <- withModuleFromPathIO "test/testdata/interpret-indirectbr.c" return
-      let newMod = fwdRewriteResultOf modu CH.noFwdRewrite
+      let newMod = flattenResultOf modu
       origModString <- ioStringOfAstModule modu
       newModString <- ioStringOfAstModule newMod
 
@@ -48,29 +49,3 @@ spec =
         "> ; <label>:N                                      ; preds = %N\n" ++
         "> ; <label>:N                                      ; preds = %N\n" ++
         "\n\n\n"
-    it "rewrites the alignment of Alloca" $ do
-      modu <- withModuleFromPathIO "test/testdata/interpret-indirectbr.c" return
-      let newMod = fwdRewriteResultOf modu $ CH.mkFRewrite (
-            \phI _ ->
-              case phI of
-                (InsnInsn (n LGAI.:= a@LGAI.Alloca{LGAI.alignment = align})) ->
-                  return $ Just $ phGUnit $
-                  InsnInsn (n LGAI.:= a {LGAI.alignment = align * 2})
-                other -> return $ Just $ phGUnit other)
-      origModString <- ioStringOfAstModule modu
-      newModString <- ioStringOfAstModule newMod
-
-      origModString `shouldContain` "alloca"
-      newModString `shouldContain` "alloca"
-      sortedLinesDiff
-        (normalizeVars origModString)
-        (normalizeVars newModString) `shouldContain`
-        "<   %codetable = alloca [5 x i8*], align 16\n" ++
-        "<   %result = alloca i32, align 4\n" ++
-        "<   %result = alloca i32, align 4\n" ++
-        "<   %result = alloca i32, align 4\n" ++
-        "---\n" ++
-        ">   %codetable = alloca [5 x i8*], align 32\n" ++
-        ">   %result = alloca i32, align 8\n" ++
-        ">   %result = alloca i32, align 8\n" ++
-        ">   %result = alloca i32, align 8\n"

@@ -1,5 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
+
+import qualified Compiler.Hoopl as CH
+
 import Control.Exception (Exception, throwIO)
 
 import Data.Either (Either(..))
@@ -27,7 +30,7 @@ toyTransform :: Module -> Module
 toyTransform = id
 
 toyPhireTransform :: Module -> Module
-toyPhireTransform m = finalizeModule $ fmap phModuleToModule $
+toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule <$>
   phModuleFromModule m
 
 getTransformByName :: String -> Either MainException (Module -> Module)
@@ -51,7 +54,7 @@ runMain (inFile:(outFile:transforms)) =
   case chainTransforms transforms of
     Right transform -> do
       genBitcodeWithTransform inFile outFile transform
-      genElfWithTransform inFile (concat [outFile, ".out"]) transform
+      genElfWithTransform inFile (outFile ++ ".out") transform
     Left e -> throwIO e
 runMain other =
   throwIO $ InvalidArgument other

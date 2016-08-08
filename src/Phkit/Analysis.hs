@@ -9,10 +9,14 @@ module Phkit.Analysis ( PhBwdAnalysis(..)
                       , PhFwdTransfer
 
                       , aOnceLattice
-                      , aOnceTransfer
+                      , aOnceBTransfer
+                      , aOnceFTransfer
 
                       , fwdAnalysisResultOf
                       , fwdAnalysisWith
+
+                      , bwdAnalysisResultOf
+                      , bwdAnalysisWith
 
                       , iSetAnalysisResultOf
 
@@ -22,6 +26,7 @@ module Phkit.Analysis ( PhBwdAnalysis(..)
                       ) where
 
 import qualified Compiler.Hoopl as CH
+import qualified Control.Monad as CM
 import qualified Data.Map as DM
 import qualified Data.Set as DS
 import qualified Debug.Trace as DT
@@ -32,8 +37,8 @@ import Phkit.Phire
 --------------------------------------------------------------------------------
 -- Ph-specialized Types
 --------------------------------------------------------------------------------
-type PhFwdPass = CH.FwdPass CH.SimpleUniqueMonad PhInstruction
-type PhBwdPass = CH.BwdPass CH.SimpleUniqueMonad PhInstruction
+type PhFwdPass = CH.FwdPass NameLabelMapFuelM PhInstruction
+type PhBwdPass = CH.BwdPass NameLabelMapFuelM PhInstruction
 
 type PhDataflowLattice = CH.DataflowLattice
 type PhNameFactMapLattice f = CH.DataflowLattice (DM.Map LGA.Name f)
@@ -62,7 +67,7 @@ phInitWithNone _ = Nothing
 
 mkPhNameFactMapLattice :: CH.DataflowLattice f -> PhNameFactMapLattice f
 mkPhNameFactMapLattice per_name_fact_lattice = CH.DataflowLattice {
-  CH.fact_name = (CH.fact_name per_name_fact_lattice) ++ "NameMap",
+  CH.fact_name = CH.fact_name per_name_fact_lattice ++ "NameMap",
   CH.fact_bot = DM.empty,
   CH.fact_join = \label (CH.OldFact oldF) (CH.NewFact newF) ->
       DM.foldWithKey (foldValue label) (CH.NoChange, oldF) newF }
@@ -77,40 +82,42 @@ mkPhNameFactMapLattice per_name_fact_lattice = CH.DataflowLattice {
 
 
 fwdAnalysisResultOf :: LGA.Module -> PhFwdAnalysis f -> [(LGA.Name, DM.Map LGA.Name f)]
-fwdAnalysisResultOf modu phA@PhFwdAnalysis{
+fwdAnalysisResultOf modu PhFwdAnalysis{
   phFALattice = lattice, phFAInit = initFun, phFATransfer = transfer } =
   let mPhModule = phModuleFromModule modu
       mPhFunctions = fmap phModuleFunctions mPhModule
       analysis = fwdAnalysisWith lattice transfer
-      analyzeFun fun@PhFunction {
+      analyzeFun PhFunction {
         phFunctionName = fname, phFunctionEntry = fentry,
         phFunctionBody = fbody, phFunctionParams = fparams} =
         let initFact = case initFun fparams of
               Just f -> CH.mapSingleton fentry f
               Nothing -> CH.noFacts
-        in (fname, (_secondIn3 $ CH.runSimpleUniqueMonad $
-                     CH.analyzeAndRewriteFwd analysis (CH.JustC fentry) fbody
-                     initFact))
-      mFactBaseList = mPhFunctions >>= (return . map analyzeFun)
+        in do
+          (_, fb, _) <- CH.analyzeAndRewriteFwd analysis (CH.JustC fentry) fbody
+            initFact
+          return (fname, fb)
+      mFactBaseList = CH.liftFuel mPhFunctions >>= mapM analyzeFun
   in
     finalizeFactBase mFactBaseList
 
 bwdAnalysisResultOf :: LGA.Module -> PhBwdAnalysis f -> [(LGA.Name, DM.Map LGA.Name f)]
-bwdAnalysisResultOf modu phA@PhBwdAnalysis {
+bwdAnalysisResultOf modu PhBwdAnalysis {
   phBALattice = lattice, phBAInit = initFun, phBATransfer = transfer } =
   let mPhModule = phModuleFromModule modu
       mPhFunctions = fmap phModuleFunctions mPhModule
       analysis = bwdAnalysisWith lattice transfer
-      analyzeFun fun@PhFunction {
+      analyzeFun PhFunction {
         phFunctionName = fname, phFunctionEntry = fentry,
         phFunctionBody = fbody, phFunctionParams = fparams} =
         let initFact = case initFun fparams of
               Just f -> CH.mapSingleton fentry f
               Nothing -> CH.noFacts
-        in (fname, (_secondIn3 $ CH.runSimpleUniqueMonad $
-                     CH.analyzeAndRewriteBwd analysis (CH.JustC fentry) fbody
-                     initFact))
-      mFactBaseList = mPhFunctions >>= mapM (return .analyzeFun)
+        in do
+          (_, fb, _) <- CH.analyzeAndRewriteBwd analysis (CH.JustC fentry) fbody
+            initFact
+          return (fname, fb)
+      mFactBaseList = CH.liftFuel mPhFunctions >>= mapM analyzeFun
   in
     finalizeFactBase mFactBaseList
 
@@ -126,8 +133,8 @@ bwdAnalysisWith lattice transfer = CH.BwdPass
   , CH.bp_transfer = transfer
   , CH.bp_rewrite = CH.noBwdRewrite }
 
-dbgFwdAnalysisOf :: Show f => PhFwdPass f -> PhFwdPass f
-dbgFwdAnalysisOf = CH.debugFwdJoins DT.trace (const True)
+-- dbgFwdAnalysisOf :: Show f => PhFwdPass f -> PhFwdPass f
+-- dbgFwdAnalysisOf = CH.debugFwdJoins DT.trace (const True)
 
 --------------------------------------------------------------------------------
 -- Analyze-once analysis
@@ -142,13 +149,21 @@ aOnceLattice = CH.DataflowLattice
                                                     old  /= (old || new)),
                                                  old || new)
 
-aOnceTransfer :: PhFwdTransfer Bool
-aOnceTransfer = CH.mkFTransfer trans
+aOnceFTransfer :: PhFwdTransfer Bool
+aOnceFTransfer = CH.mkFTransfer trans
   where
     trans :: PhInstruction e x -> Bool -> CH.Fact x Bool
     trans NameInsn{} _ = True
     trans InsnInsn{} _ = True
     trans n@(TermInsn{}) _ = CH.distributeFact n True
+
+aOnceBTransfer :: PhBwdTransfer Bool
+aOnceBTransfer = CH.mkBTransfer trans
+  where
+    trans :: PhInstruction e x -> CH.Fact x Bool -> Bool
+    trans NameInsn{} _ = True
+    trans InsnInsn{} _ = True
+    trans TermInsn{} _ = True
 
 --------------------------------------------------------------------------------
 -- Instruction set analysis

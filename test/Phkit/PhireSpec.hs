@@ -23,7 +23,7 @@ spec :: Spec
 spec =
   describe "Phire construction tests" $ do
     it "converts LGA.Module to Funcs." $ do
-      result <- fmap show $ phModuleFromPath
+      result <- show <$> phModuleFromPath
         "test/testdata/interpret-indirectbr.c"
       result `shouldContain` "phFunctionName"
       result `shouldContain` "phFunctionEntry = L1"
@@ -35,41 +35,41 @@ spec =
       result `shouldContain` "Br"
       result `shouldNotContain` "PatternMatchFail!"
     it "supports all types in buffer_overflow_1.c." $ do
-      result <- fmap show $ phModuleFromPath
+      result <- show <$> phModuleFromPath
         "test/testdata/buffer_overflow_1.c"
       result `shouldNotContain` "PatternMatchFail!"
     it "supports all types in argbuf_heap_overflow_fptr_rewrite.c." $ do
-      result <- fmap show $ phModuleFromPath
+      result <- show <$> phModuleFromPath
         "test/testdata/argbuf_heap_overflow_fptr_rewrite.c"
       result `shouldNotContain` "PatternMatchFail!"
     it "normalizes phv*." $ do
-      result <- fmap show $ phModuleFromPath
+      result <- show <$> phModuleFromPath
         "test/testdata/phv_normalization.c"
       result `shouldContain` "deja_vu"
       result `shouldContain` "phvL"
       result `shouldNotContain` "phv1987"
     it "emits the same PhModule for parallel conversion." $ do
       let filename = "test/testdata/phv_normalization.c"
-      result1 <- fmap show $ phModuleFromPath filename
-      result2 <- fmap show $ phModuleFromPath filename
+      result1 <- show <$> phModuleFromPath filename
+      result2 <- show <$> phModuleFromPath filename
       result1 `shouldContain` "phModule"
-      (linesDiff
+      linesDiff
         (unlines $ tail $ lines result1)
-        (unlines $ tail $ lines result2)) `shouldBe` ""
+        (unlines $ tail $ lines result2) `shouldBe` ""
     it "emits the same PhModule for sequential conversion." $ do
       let filename = "test/testdata/phv_normalization.c"
       phm1 <- phModuleFromPath filename
-      phm2 <- return $ testOnlyRunWithEmptyMap $ phModuleFromModule
-              $ phModuleToModule $ phm1
-      let result1 = show phm1
+      let phm2 = testOnlyRunWithEmptyMap $ phModuleFromModule
+                 $ phModuleToModule phm1
+          result1 = show phm1
           result2 = show phm2
       result1 `shouldContain` "phModule"
-      (linesDiff
+      linesDiff
         (unlines $ tail $ lines result1)
-        (unlines $ tail $ lines result2)) `shouldBe` ""
+        (unlines $ tail $ lines result2) `shouldBe` ""
     it "emits the same LGA.Module for parallel conversion." $ do
       let filename = "test/testdata/phv_normalization.c"
-      origMod <- withModuleFromPathIO filename $ return
+      origMod <- withModuleFromPathIO filename return
       let result1 = show $ phModuleToModule $ testOnlyRunWithEmptyMap
                     $ phModuleFromModule origMod
           result2 = show $ phModuleToModule $ testOnlyRunWithEmptyMap
@@ -78,7 +78,7 @@ spec =
       result1 `shouldBe` result2
     it "emits the same LGA.Module for sequential conversion." $ do
       let filename = "test/testdata/phv_normalization.c"
-      origMod <- withModuleFromPathIO filename $ return
+      origMod <- withModuleFromPathIO filename return
       let phm1 = phModuleToModule $ testOnlyRunWithEmptyMap
                  $ phModuleFromModule origMod
           phm2 =  phModuleToModule $ testOnlyRunWithEmptyMap
@@ -89,7 +89,7 @@ spec =
       result1 `shouldBe` result2
     it "emits different LGA.Module than original." $ do
       let filename = "test/testdata/phv_normalization.c"
-      origMod <- withModuleFromPathIO filename $ return
+      origMod <- withModuleFromPathIO filename return
       let phm1 = phModuleToModule $ testOnlyRunWithEmptyMap
                  $ phModuleFromModule origMod
       let result0 = show origMod

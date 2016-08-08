@@ -23,8 +23,12 @@ library
                      , Phkit.Analysis
                      , Phkit.Common
                      , Phkit.Experimental
+                     , Phkit.FlattenTransform
                      , Phkit.IO
                      , Phkit.Phire
+                     , Phkit.SoftBound.Checker
+                     , Phkit.SoftBound.Tracker
+                     , Phkit.SoftBoundTransform
                      , Phkit.Transform
   build-depends:       base >= 4.7 && < 5
                      , bimap
@@ -44,6 +48,7 @@ executable llvm-phkit-exe
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
+                     , hoopl == 3.10.2.1
                      , llvm-general >= 3.5 && <4
                      , llvm-general-pure >= 3.5 && <4
                      , llvm-phkit
@@ -72,3 +77,6 @@ test-suite llvm-phkit-test
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
+source-repository head
+  type:     git
+  location: https://bitbucket.org/zchn/llvm-phkit

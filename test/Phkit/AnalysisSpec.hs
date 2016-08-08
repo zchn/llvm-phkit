@@ -23,9 +23,15 @@ spec =
       withModuleFromPathIO "test/testdata/buffer_overflow_1.c" (
           return . DS.toAscList . iSetAnalysisResultOf)
       `shouldReturn` ["Alloca","Call","GetElementPtr","Ret","Store"])
-    it "runs aOnceAnalysis and terminates" (
+    it "runs aOnceFAnalysis and terminates" (
       withModuleFromPathIO "test/testdata/interpret-indirectbr.c" (
           \modu -> return $ length $
                    fwdAnalysisResultOf modu $
-                   PhFwdAnalysis aOnceLattice phInitWithNone aOnceTransfer)
+                   PhFwdAnalysis aOnceLattice phInitWithNone aOnceFTransfer)
+      `shouldReturn` 9)
+    it "runs aOnceBAnalysis and terminates" (
+      withModuleFromPathIO "test/testdata/interpret-indirectbr.c" (
+          \modu -> return $ length $
+                   bwdAnalysisResultOf modu $
+                   PhBwdAnalysis aOnceLattice phInitWithNone aOnceBTransfer)
       `shouldReturn` 9)

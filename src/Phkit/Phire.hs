@@ -1,8 +1,10 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs, TypeFamilies, UndecidableInstances #-}
 
 module Phkit.Phire ( finalizeFactBase
                    , finalizeModule
+                   , freshName
                    , NameLabelMapM
+                   , NameLabelMapFuelM
                    , PhModule(..)
                    , PhFunction(..)
                    , PhFunctionParams
@@ -44,22 +46,22 @@ phGUnit phiCO@NameInsn{} = CH.gUnitCO $ CH.BlockCO phiCO CH.BNil
 phGUnit phiOO@InsnInsn{} = CH.gUnitOO $ CH.BMiddle phiOO
 phGUnit phiOC@TermInsn{} = CH.gUnitOC $ CH.BlockOC CH.BNil phiOC
 
-finalizeFactBase :: NameLabelMapM [(LGA.Name, CH.FactBase f)]
+finalizeFactBase :: NameLabelMapFuelM [(LGA.Name, CH.FactBase f)]
   -> [(LGA.Name, DM.Map LGA.Name f)]
-finalizeFactBase mFunFactBases = runWithEmptyMap $
-  mFunFactBases >>= (mapM phNameFactMapFromFactBase)
+finalizeFactBase mFunFactBases = runNameLabelMapFuelM $
+  mFunFactBases >>= mapM phNameFactMapFromFactBase
 
 phNameFactMapFromFactBase :: (LGA.Name, CH.FactBase f)
-                    -> NameLabelMapM (LGA.Name, DM.Map LGA.Name f)
-phNameFactMapFromFactBase (name, fb) =
+                    -> NameLabelMapFuelM (LGA.Name, DM.Map LGA.Name f)
+phNameFactMapFromFactBase (name, fb) = CH.liftFuel $
                       CH.mapFoldWithKey addToMMap (return (name, DM.empty)) fb
   where addToMMap k v mNameAndMap = do
-          name <- nameFor k
+          kname <- nameFor k
           (fn, origMap) <- mNameAndMap
-          return (fn, DM.insert name v origMap)
+          return (fn, DM.insert kname v origMap)
 
-finalizeModule :: NameLabelMapM LGA.Module -> LGA.Module
-finalizeModule mMod = runWithEmptyMap mMod
+finalizeModule :: NameLabelMapFuelM LGA.Module -> LGA.Module
+finalizeModule = runNameLabelMapFuelM
 
 phModuleFromModule :: LGA.Module -> NameLabelMapM PhModule
 phModuleFromModule modu@LGA.Module{LGA.moduleName = name,
@@ -138,7 +140,7 @@ phBodyFromBB (LGA.BasicBlock name namedInstructions namedTerminator) =
 phBodyToBBs :: CH.Label -> PhBody -> [LGA.BasicBlock]
 phBodyToBBs entry body =
   let enterableGraph =
-        (CH.blockGraph $ CH.blockJoinTail CH.emptyBlock $
+        CH.blockGraph (CH.blockJoinTail CH.emptyBlock $
           TermInsn (LGA.Do $ LGA.Unreachable []) [entry])
         CH.|*><*| body
   in
@@ -245,30 +247,30 @@ class Normalizable t where
   normalize :: t -> NameLabelMapM  t
 
 normalize2 :: (Normalizable a) =>
-  (a -> b) -> a -> (NameLabelMapM b)
+  (a -> b) -> a -> NameLabelMapM b
 normalize2 f a = fmap f (normalize a)
 
 normalize3 :: (Normalizable a, Normalizable b) =>
-  (a -> b -> c) -> a -> b -> (NameLabelMapM c)
+  (a -> b -> c) -> a -> b -> NameLabelMapM c
 normalize3 f a b = do
   f' <- normalize2 f a
   normalize2 f' b
 
 normalize4 :: (Normalizable a, Normalizable b, Normalizable c) =>
-  (a -> b -> c -> d) -> a -> b -> c -> (NameLabelMapM d)
+  (a -> b -> c -> d) -> a -> b -> c -> NameLabelMapM d
 normalize4 f a b c = do
   f' <- normalize3 f a b
   normalize2 f' c
 
 normalize5 :: (Normalizable a, Normalizable b, Normalizable c, Normalizable d) =>
-  (a -> b -> c -> d -> e) -> a -> b -> c -> d -> (NameLabelMapM e)
+  (a -> b -> c -> d -> e) -> a -> b -> c -> d -> NameLabelMapM e
 normalize5 f a b c d = do
   f' <- normalize4 f a b c
   normalize2 f' d
 
 normalize6 :: (Normalizable a, Normalizable b, Normalizable c, Normalizable d,
                Normalizable e) =>
-  (a -> b -> c -> d -> e -> f) -> a -> b -> c -> d -> e -> (NameLabelMapM f)
+  (a -> b -> c -> d -> e -> f) -> a -> b -> c -> d -> e -> NameLabelMapM f
 normalize6 f a b c d e = do
   f' <- normalize5 f a b c d
   normalize2 f' e
@@ -276,7 +278,7 @@ normalize6 f a b c d e = do
 normalize7 :: (Normalizable a, Normalizable b, Normalizable c, Normalizable d,
                Normalizable e, Normalizable f) =>
   (a -> b -> c -> d -> e -> f -> z) -> a -> b -> c -> d -> e -> f
-  -> (NameLabelMapM z)
+  -> NameLabelMapM z
 normalize7 fun a b c d e f = do
   fun' <- normalize6 fun a b c d e
   normalize2 fun' f
@@ -284,7 +286,7 @@ normalize7 fun a b c d e f = do
 normalize8 :: (Normalizable a, Normalizable b, Normalizable c, Normalizable d,
                Normalizable e, Normalizable f, Normalizable g) =>
   (a -> b -> c -> d -> e -> f -> g -> z) -> a -> b -> c -> d -> e -> f -> g
-  -> (NameLabelMapM z)
+  -> NameLabelMapM z
 normalize8 fun a b c d e f g = do
   fun' <- normalize7 fun a b c d e f
   normalize2 fun' g
@@ -293,13 +295,13 @@ normalize9 :: (Normalizable a, Normalizable b, Normalizable c, Normalizable d,
                Normalizable e, Normalizable f, Normalizable g, Normalizable h)
               =>
   (a -> b -> c -> d -> e -> f -> g -> h -> z) -> a -> b -> c -> d -> e -> f -> g
-  -> h -> (NameLabelMapM z)
+  -> h -> NameLabelMapM z
 normalize9 fun a b c d e f g h = do
   fun' <- normalize8 fun a b c d e f g
   normalize2 fun' h
 
 instance Normalizable a => Normalizable [a] where
-  normalize ta = mapM normalize ta
+  normalize = mapM normalize
 
 instance Normalizable a => Normalizable (Maybe a) where
   normalize (Just a) = fmap Just (normalize a)
@@ -435,13 +437,13 @@ instance Normalizable LGAI.InlineAssembly where
 insnErrorIndicator :: LGA.Instruction -> LGA.Instruction
 insnErrorIndicator insn = LGA.Fence {
   LGA.atomicity = (LGA.SingleThread, LGA.Unordered),
-  LGA.metadata = [("PatternMatchFail!: " ++ (show insn),
+  LGA.metadata = [("PatternMatchFail!: " ++ show insn,
                    LGAO.MetadataNodeReference (LGAO.MetadataNodeID 0))] }
 
 constErrorIndicator :: LGACo.Constant -> LGACo.Constant
 constErrorIndicator const =
   LGACo.Undef $ LGA.NamedTypeReference $ LGA.Name $
-    "PatternMatchFail!:" ++ (show const)
+    "PatternMatchFail!:" ++ show const
 
 --------------------------------------------------------------------------------
 -- The NameLabelMapM monad
@@ -450,6 +452,49 @@ constErrorIndicator const =
 type NameLabelMap = DB.Bimap LGA.Name CH.Label
 data NameLabelMapM a = NameLabelMapM (NameLabelMap ->
                               CH.SimpleUniqueMonad (NameLabelMap, a))
+type NameLabelMapFuelM = CH.CheckingFuelMonad NameLabelMapM
+
+runNameLabelMapFuelM :: NameLabelMapFuelM a -> a
+runNameLabelMapFuelM = runWithEmptyMap . CH.runWithFuel CH.infiniteFuel
+
+-- instance CH.FuelMonad NameLabelMapM where
+--   getFuel =
+--     let mapper :: NameLabelMap -> CH.SimpleUniqueMonad (NameLabelMap, CH.Fuel)
+--         mapper m = do
+--           fuel <- CH.getFuel
+--           return (m, fuel)
+--     in NameLabelMapM mapper
+--   setFuel fuel =
+--     let mapper :: NameLabelMap -> CH.SimpleUniqueMonad (NameLabelMap, ())
+--         mapper m = do
+--           void <- CH.setFuel fuel
+--           return (m, void)
+--     in NameLabelMapM mapper
+
+instance CH.UniqueMonad NameLabelMapM where
+  freshUnique =
+    let mapper :: NameLabelMap -> CH.SimpleUniqueMonad (NameLabelMap, CH.Unique)
+        mapper m = do
+          unique <- CH.freshUnique
+          return (m, unique)
+    in NameLabelMapM mapper
+
+instance CH.CheckpointMonad NameLabelMapM where
+  type Checkpoint NameLabelMapM = (
+    NameLabelMap, CH.Checkpoint CH.SimpleUniqueMonad)
+  checkpoint =
+    let mapper :: NameLabelMap -> CH.SimpleUniqueMonad (
+          NameLabelMap, (NameLabelMap, CH.Checkpoint CH.SimpleUniqueMonad))
+        mapper m = do
+          suCheckpoint <- CH.checkpoint
+          return (m, (m, suCheckpoint))
+    in NameLabelMapM mapper
+  restart (m, suCheckpoint) =
+    let mapper :: NameLabelMap -> CH.SimpleUniqueMonad (NameLabelMap, ())
+        mapper _ = do
+          _ <- CH.restart suCheckpoint
+          return (m, ())
+    in NameLabelMapM mapper
 
 freshName :: NameLabelMapM LGA.Name
 freshName = NameLabelMapM f
@@ -472,7 +517,7 @@ labelsFor = mapM labelFor
 phNameVarPrefix = "phv"
 isNormalized :: LGA.Name -> Bool
 isNormalized name@(LGA.Name nameStr) =
-  DL.isPrefixOf phNameVarPrefix nameStr
+  phNameVarPrefix `DL.isPrefixOf` nameStr
 isNormalized _ = False
 
 nameFor :: CH.Label -> NameLabelMapM LGA.Name
@@ -487,7 +532,7 @@ nameFor label = NameLabelMapM f
                     return (m', n')
 
 namesFor :: [CH.Label] -> NameLabelMapM [LGA.Name]
-namesFor labels = mapM nameFor labels
+namesFor = mapM nameFor
 
 -- TODO(zchn): Optimize using isNormalized if necessary
 instance Normalizable LGA.Name where
