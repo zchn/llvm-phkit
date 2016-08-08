@@ -1,16 +1,21 @@
 name:                llvm-phkit
 version:             0.1.0.0
-synopsis:            A collection of LLVM passes for program hardening.
-description:         Please see README.md
+author:              Kevin Chen
+bug-reports:         https://github.com/zchn/llvm-phkit/issues
+build-type:          Simple
+cabal-version:       >= 1.10
+category:            Compiler, Security
+copyright:           (c) 2016 Kevin Chen
 homepage:            https://github.com/zchn/llvm-phkit
 license-file:        LICENSE
-author:              Kevin Chen
-maintainer:          k_@berkeley.edu
-copyright:           2016 Kevin Chen
-category:            Compiler, Security
-build-type:          Simple
--- extra-source-files:
-cabal-version:       >=1.10
+license:             Apache
+maintainer:          Kevin Chen <k_@berkeley.edu>
+stability:           experimental
+synopsis:            LLVM passes for program hardening.
+description:         Please see README.md
+source-repository head
+  type:              git
+  location:          git://github.com/zchn/llvm-phkit.git
 
 library
   hs-source-dirs:      src
