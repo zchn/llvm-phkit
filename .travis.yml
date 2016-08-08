@@ -62,15 +62,6 @@ matrix:
     compiler: ": #stack nightly"
     addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5-dev]}}
 
-  # Build on OS X in addition to Linux
-  - env: BUILD=stack ARGS=""
-    compiler: ": #stack default osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly osx"
-    os: osx
-
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=stack ARGS="--resolver nightly"
