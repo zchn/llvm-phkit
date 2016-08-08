@@ -30,7 +30,7 @@ toyTransform :: Module -> Module
 toyTransform = id
 
 toyPhireTransform :: Module -> Module
-toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule <$>
+toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule CH.<$>
   phModuleFromModule m
 
 getTransformByName :: String -> Either MainException (Module -> Module)
