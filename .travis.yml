@@ -49,18 +49,6 @@ matrix:
     compiler: ": #stack default"
     addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.10.3], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-2"
-    compiler: ": #stack 7.8.4"
-    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.8.4], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-3"
-    compiler: ": #stack 7.10.2"
-    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.10.2], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
-
-  - env: BUILD=stack ARGS="--resolver lts-5"
-    compiler: ": #stack 7.10.3"
-    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.10.3], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
-
   - env: BUILD=stack ARGS="--resolver lts-6.6"
     compiler: ": #stack 7.10.3"
     addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.10.3], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
@@ -72,30 +60,10 @@ matrix:
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly"
-    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5-dev]}}
-
-  # Build on OS X in addition to Linux
-  - env: BUILD=stack ARGS=""
-    compiler: ": #stack default osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-2"
-    compiler: ": #stack 7.8.4 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-3"
-    compiler: ": #stack 7.10.2 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-5"
-    compiler: ": #stack 7.10.3 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver nightly"
-    compiler: ": #stack nightly osx"
-    os: osx
+    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, ghc-7.10.3], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
 
   allow_failures:
+  - env: BUILD=cabal GHCVER=8.0.1 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=stack ARGS="--resolver nightly"
 
