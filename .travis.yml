@@ -1,5 +1,5 @@
 # Use new container infrastructure to enable caching
-sudo: false
+# sudo: false
 
 # Choose a lightweight base image; we provide our own build tools.
 language: c
@@ -27,7 +27,8 @@ matrix:
   # https://github.com/hvr/multi-ghc-travis
   - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 7.8.4"
-    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, cabal-install-1.18,ghc-7.8.4,happy-1.19.5,alex-3.1.7], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
+    addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, cabal-install-1.18,ghc-7.8.4,happy-1.19.5,alex-3.1.7
+    ], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
   - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 7.10.3"
     addons: {apt: {packages: [gcc-4.8, g++-4.8, libedit-dev, clang-3.5, llvm-3.5, llvm-3.5-dev, cabal-install-1.22,ghc-7.10.3,happy-1.19.5,alex-3.1.7], sources: [ubuntu-toolchain-r-test, llvm-toolchain-precise-3.5, hvr-ghc]}}
