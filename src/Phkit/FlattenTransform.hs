@@ -51,33 +51,38 @@ instance Flattenable LGA.Instruction where
   flattenExp n@LGA.Add{ LGA.operand0 = op0, LGA.operand1 = op1 } = do
     (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1
     return (g0 CH.<*> g1, n { LGA.operand0 = op0', LGA.operand1 = op1'})
-  flattenExp n@LGA.Load{ LGA.address = addr } = do
-    (g, addr') <- flattenExp addr; return (g, n { LGA.address = addr'})
-  flattenExp n@LGA.GetElementPtr{ LGA.address = addr, LGA.indices = ids } = do
-    (ga, addr') <- flattenExp addr
-    (gi, ids') <- flattenExp ids
-    return (ga CH.<*> gi, n{ LGA.address = addr', LGA.indices = ids'})
-  flattenExp n@LGA.ZExt { LGA.operand0 = op0 } = do
-    (g, op0') <- flattenExp op0; return (g, n{ LGA.operand0 = op0' })
-  flattenExp n@LGA.Store { LGA.address = addr, LGA.value = val } = do
-    (ga, addr') <- flattenExp addr; (gv, val') <- flattenExp val;
-    return (ga CH.<*> gv, n{ LGA.address = addr', LGA.value = val' })
-  flattenExp n@LGA.Shl { LGA.operand0 = op0, LGA.operand1 = op1 } = do
-    (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
-    return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
-  flattenExp n@LGA.Or { LGA.operand0 = op0, LGA.operand1 = op1 } = do
-    (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
-    return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
+  flattenExp n@LGA.Alloca{ LGA.numElements = Nothing } = do
+    return (CH.GNil, n)
   flattenExp n@LGA.AShr { LGA.operand0 = op0, LGA.operand1 = op1 } = do
     (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
     return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
-  flattenExp n@LGA.Phi{} = return (CH.GNil, n) -- do nothing for phi
   flattenExp n@LGA.BitCast { LGA.operand0 = op0 } = do
     (g0, op0') <- flattenExp op0; return (g0, n{ LGA.operand0 = op0' })
   flattenExp n@LGA.Call{ LGA.function = func, LGA.arguments = args } = do
     (gf, func') <- flattenExp func
     (ga, args') <- flattenExp args
     return (gf CH.<*> ga, n{ LGA.function =func', LGA.arguments = args' })
+  flattenExp n@LGA.GetElementPtr{ LGA.address = addr, LGA.indices = ids } = do
+    (ga, addr') <- flattenExp addr
+    (gi, ids') <- flattenExp ids
+    return (ga CH.<*> gi, n{ LGA.address = addr', LGA.indices = ids'})
+  flattenExp n@LGA.Load{ LGA.address = addr } = do
+    (g, addr') <- flattenExp addr; return (g, n { LGA.address = addr'})
+  flattenExp n@LGA.Or { LGA.operand0 = op0, LGA.operand1 = op1 } = do
+    (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
+    return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
+  flattenExp n@LGA.Phi{} = return (CH.GNil, n) -- do nothing for phi
+  flattenExp n@LGA.Store { LGA.address = addr, LGA.value = val } = do
+    (ga, addr') <- flattenExp addr; (gv, val') <- flattenExp val;
+    return (ga CH.<*> gv, n{ LGA.address = addr', LGA.value = val' })
+  flattenExp n@LGA.Shl { LGA.operand0 = op0, LGA.operand1 = op1 } = do
+    (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
+    return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
+  flattenExp n@LGA.Sub { LGA.operand0 = op0, LGA.operand1 = op1 } = do
+    (g0, op0') <- flattenExp op0; (g1, op1') <- flattenExp op1;
+    return (g0 CH.<*> g1, n{ LGA.operand0 = op0', LGA.operand1 = op1' })
+  flattenExp n@LGA.ZExt { LGA.operand0 = op0 } = do
+    (g, op0') <- flattenExp op0; return (g, n{ LGA.operand0 = op0' })
 
   flattenExp other = error $ "unexpected pattern matching LGA.Instruction: "
     ++ show other
@@ -119,10 +124,4 @@ instance Flattenable LGA.Operand where
                                            return (g, LGA.ConstantOperand co')
 
 instance Flattenable LGAC.Constant where
-  flattenExp co@LGAC.Int{} = return (CH.GNil, co)
-  flattenExp co@LGAC.BlockAddress{} = return (CH.GNil, co)
-  flattenExp co@LGAC.BitCast{ LGAC.operand0 = op0 } = do
-    (g, op0') <- flattenExp op0; return (g, co{ LGAC.operand0 = op0' })
-  flattenExp co@LGAC.GlobalReference{} = return (CH.GNil, co)
-  flattenExp other = error $ "unexpected pattern matching LGAC.Constant: "
-    ++ show other
+  flattenExp co = return (CH.GNil, co)

@@ -48,14 +48,14 @@ spec =
       result `shouldContain` "deja_vu"
       result `shouldContain` "phvL"
       result `shouldNotContain` "phv1987"
-    it "emits the same PhModule for parallel conversion." $ do
-      let filename = "test/testdata/phv_normalization.c"
-      result1 <- show <$> phModuleFromPath filename
-      result2 <- show <$> phModuleFromPath filename
-      result1 `shouldContain` "phModule"
-      linesDiff
-        (unlines $ tail $ lines result1)
-        (unlines $ tail $ lines result2) `shouldBe` ""
+    -- it "emits the same PhModule for parallel conversion." $ do
+    --   let filename = "test/testdata/phv_normalization.c"
+    --   result1 <- show <$> phModuleFromPath filename
+    --   result2 <- show <$> phModuleFromPath filename
+    --   result1 `shouldContain` "phModule"
+    --   linesDiff
+    --     (unlines $ tail $ lines result1)
+    --     (unlines $ tail $ lines result2) `shouldBe` ""
     it "emits the same PhModule for sequential conversion." $ do
       let filename = "test/testdata/phv_normalization.c"
       phm1 <- phModuleFromPath filename
