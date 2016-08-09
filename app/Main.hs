@@ -2,6 +2,7 @@
 
 
 import qualified Compiler.Hoopl as CH
+import qualified Control.Applicative as CA
 
 import Control.Exception (Exception, throwIO)
 
@@ -30,7 +31,7 @@ toyTransform :: Module -> Module
 toyTransform = id
 
 toyPhireTransform :: Module -> Module
-toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule CH.<$>
+toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule CA.<$>
   phModuleFromModule m
 
 getTransformByName :: String -> Either MainException (Module -> Module)
