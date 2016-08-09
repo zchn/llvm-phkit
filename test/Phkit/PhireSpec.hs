@@ -2,6 +2,7 @@
 
 module Phkit.PhireSpec (spec) where
 
+import qualified Control.Applicative as CA
 import qualified Data.List as DL
 import qualified Data.Set as DS
 
@@ -23,7 +24,7 @@ spec :: Spec
 spec =
   describe "Phire construction tests" $ do
     it "converts LGA.Module to Funcs." $ do
-      result <- show <$> phModuleFromPath
+      result <- show CA.<$> phModuleFromPath
         "test/testdata/interpret-indirectbr.c"
       result `shouldContain` "phFunctionName"
       result `shouldContain` "phFunctionEntry = L1"
@@ -35,15 +36,15 @@ spec =
       result `shouldContain` "Br"
       result `shouldNotContain` "PatternMatchFail!"
     it "supports all types in buffer_overflow_1.c." $ do
-      result <- show <$> phModuleFromPath
+      result <- show CA.<$> phModuleFromPath
         "test/testdata/buffer_overflow_1.c"
       result `shouldNotContain` "PatternMatchFail!"
     it "supports all types in argbuf_heap_overflow_fptr_rewrite.c." $ do
-      result <- show <$> phModuleFromPath
+      result <- show CA.<$> phModuleFromPath
         "test/testdata/argbuf_heap_overflow_fptr_rewrite.c"
       result `shouldNotContain` "PatternMatchFail!"
     it "normalizes phv*." $ do
-      result <- show <$> phModuleFromPath
+      result <- show CA.<$> phModuleFromPath
         "test/testdata/phv_normalization.c"
       result `shouldContain` "deja_vu"
       result `shouldContain` "phvL"
