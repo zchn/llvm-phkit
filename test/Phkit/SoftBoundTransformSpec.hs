@@ -15,11 +15,11 @@ spec =
               let newMod = softBoundRewriteResultOf modu
               origModString <- ioStringOfAstModule modu
               newModString <- ioStringOfAstModule newMod
-              newModString `shouldContain` "sbcheck"
-              newModString `shouldContain` "sbsave"
+              newModString `shouldContain` "call void @sbcheck"
+              newModString `shouldContain` "call void @sbsave"
               newModString `shouldContain`
                   "define internal i32 @interpret_threaded(i8* %opcodes) #1 {"
-       it "inserts sbupdate and sbload." $
+       it "inserts sbload." $
            do modu <- 
                   withModuleFromPathIO
                       "test/testdata/interpret-indirectbr.c"
@@ -27,8 +27,7 @@ spec =
               let newMod = softBoundRewriteResultOf modu
               origModString <- ioStringOfAstModule modu
               newModString <- ioStringOfAstModule newMod
-              -- newModString `shouldContain` "sbupdate"
-              -- newModString `shouldContain` "sbload"
+              newModString `shouldContain` "call void @sbload"
               newModString `shouldContain`
                   "define internal i32 @interpret_threaded(i8* %opcodes) #1 {"
        it "inserts sbfunc." $

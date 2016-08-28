@@ -25,7 +25,7 @@ becomes
 
 -}
 module Phkit.SoftBound.Lang
-       (maybeGetCheckedPtr, maybeGetSavedPptr, mkSbCheck, mkSbSave,
+       (maybeGetCheckedPtr, maybeGetSavedPptr, mkSbCheck, mkSbSave, mkSbLoad,
         sbMetaType)
        where
 
@@ -142,11 +142,23 @@ mkSbCopy meta ptr meta0 =
         [ LGAO.LocalReference LGAT.VoidType ptr
         , LGAO.LocalReference sbMetaType meta0]
 
--- | ptr_meta = sbload(ptr_ptr)
+-- | ptr_meta = sbload(ptr, ptr_ptr)
 mkSbLoad
-    :: LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
-mkSbLoad meta ptr_ptr = 
+    :: LGA.Name -> LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
+mkSbLoad meta ptr ptr_ptr = 
     meta :=
-    _mkSbCall sbMetaType "sbload" [LGAO.LocalReference LGAT.VoidType ptr_ptr]-- | ptr_and_meta = sbfun_...
-                                                                             -- | ptr = sbextractptr(ptr_and_meta)
-                                                                             -- | ptr_meta = sbextractmeta(ptr, ptr_and_meta)
+    _mkSbCall sbMetaType "sbload" [LGAO.LocalReference LGAT.VoidType ptr,
+                                   LGAO.LocalReference LGAT.VoidType ptr_ptr]
+
+
+
+-- | ptr_and_meta = sbfun_...
+-- | ptr = sbextractptr(ptr_and_meta)
+-- | ptr_meta = sbextractmeta(ptr, ptr_and_meta)
+
+
+maybeGetTrackedPtr :: LGA.Named LGA.Instruction -> Maybe (LGA.Name, LGA.Name)
+maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
+    Just (arg_ptr, tracker_name)
+-- maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
+--     Just (arg_ptr, tracker_name)

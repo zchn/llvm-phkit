@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 
-module Phkit.Transform (PhFwdRewrite
+module Phkit.Transform (PhBwdRewrite,
+                        PhFwdRewrite
                        ,bwdTransformResultOf
                        ,bwdRewriteResultOf
                        ,fwdTransformResultOf

@@ -17,6 +17,7 @@ import LLVM.General.AST (Named(..))
 import Phkit.Analysis
 import Phkit.Phire
 import Phkit.Transform
+import Phkit.SoftBound.Common
 import Phkit.SoftBound.Lang
 
 softBoundAddCheckResultOf :: LGA.Module -> LGA.Module
@@ -25,7 +26,7 @@ softBoundAddCheckResultOf modu =
         modu
         sbFunctionCheckLattice
         sbCheckTransfer
-        softBoundRewrite
+        sbCheckRewrite
 
 sbCheckTransfer :: PhFwdTransfer SbFunctionCheckFact
 sbCheckTransfer = CH.mkFTransfer trans
@@ -64,8 +65,8 @@ sbCheckTransfer = CH.mkFTransfer trans
         in CH.distributeFact ti newF
     trans ti@TermInsn{} f = CH.distributeFact ti f
 
-softBoundRewrite :: PhFwdRewrite SbFunctionCheckFact
-softBoundRewrite = 
+sbCheckRewrite :: PhFwdRewrite SbFunctionCheckFact
+sbCheckRewrite = 
     CH.mkFRewrite
         (\phI f -> 
               fmap Just $ maybeAddCheck phI f)

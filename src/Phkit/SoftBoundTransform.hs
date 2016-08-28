@@ -18,6 +18,7 @@ import qualified LLVM.General.AST.Type as LGAT
 import Phkit.Analysis
 import Phkit.Phire
 import Phkit.SoftBound.Checker
+import Phkit.SoftBound.Lang
 import Phkit.SoftBound.Tracker
 import Phkit.Transform
 
@@ -30,7 +31,17 @@ softBoundAddHeaderResultOf modu@LGA.Module { LGA.moduleDefinitions = defs } =
   modu { LGA.moduleDefinitions =
            LGA.GlobalDefinition (LGA.functionDefaults {
                                      LGAG.returnType  = LGAT.VoidType,
-                                     LGAG.name = LGA.Name "sbcheck" }) :
+                                     LGAG.name = LGA.Name "sbinit" }) :
            LGA.GlobalDefinition (LGA.functionDefaults {
                                      LGAG.returnType  = LGAT.VoidType,
-                                     LGAG.name = LGA.Name "sbsave" }) : defs }
+                                     LGAG.name = LGA.Name "sbcopy" }) :
+           LGA.GlobalDefinition (LGA.functionDefaults {
+                                     LGAG.returnType  = LGAT.VoidType,
+                                     LGAG.name = LGA.Name "sbsave" }) :
+           LGA.GlobalDefinition (LGA.functionDefaults {
+                                     LGAG.returnType  = LGAT.VoidType,
+                                     LGAG.name = LGA.Name "sbload" }) :
+           LGA.GlobalDefinition (LGA.functionDefaults {
+                                     LGAG.returnType  = LGAT.VoidType,
+                                     LGAG.name = LGA.Name "sbcheck" }) :
+           defs }
