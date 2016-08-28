@@ -38,7 +38,9 @@ import qualified LLVM.General.AST.Instruction as LGAI
 import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
 
-sbPtrBaseType = 
+import LLVM.General.AST (Named(..))
+
+sbPtrBaseType =
     LGAT.PointerType
     { LGAT.pointerReferent = LGAT.VoidType
     , LGAT.pointerAddrSpace = LGAA.AddrSpace 0
@@ -123,7 +125,7 @@ mkSbInit
     -> LGAC.Constant -- ^ size
     -> LGA.Named LGA.Instruction
 mkSbInit ptr_meta ptr size = 
-    ptr_meta LGA.:=
+    ptr_meta :=
     _mkSbCall
         sbMetaType
         "sbinit"
@@ -133,7 +135,7 @@ mkSbInit ptr_meta ptr size =
 mkSbCopy
     :: LGA.Name -> LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
 mkSbCopy meta ptr meta0 = 
-    meta LGA.:=
+    meta :=
     _mkSbCall
         sbMetaType
         "sbcopy"
@@ -144,7 +146,7 @@ mkSbCopy meta ptr meta0 =
 mkSbLoad
     :: LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
 mkSbLoad meta ptr_ptr = 
-    meta LGA.:=
+    meta :=
     _mkSbCall sbMetaType "sbload" [LGAO.LocalReference LGAT.VoidType ptr_ptr]-- | ptr_and_meta = sbfun_...
                                                                              -- | ptr = sbextractptr(ptr_and_meta)
                                                                              -- | ptr_meta = sbextractmeta(ptr, ptr_and_meta)

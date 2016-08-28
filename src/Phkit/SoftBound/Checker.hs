@@ -13,6 +13,9 @@ import qualified LLVM.General.AST.Global as LGAG
 import qualified LLVM.General.AST.Instruction as LGAI
 import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
+
+import LLVM.General.AST (Named(..))
+
 import Phkit.Analysis
 import Phkit.Phire
 import Phkit.Transform
@@ -42,11 +45,11 @@ sbCheckTransfer = CH.mkFTransfer trans
                             pstate
                             (SbChecked ptr_meta (DS.singleton ptr_size) False)
                 in DM.insert ptr newState f
-            Nothing -> 
+            Nothing ->
                 case maybeGetSavedPptr insn of
-                    Just pptr -> 
+                    Just pptr ->
                         case DM.lookup pptr f of
-                            Just checkState -> 
+                            Just checkState ->
                                 DM.insert
                                     pptr
                                     (checkState
@@ -56,10 +59,10 @@ sbCheckTransfer = CH.mkFTransfer trans
                             Nothing -> f
                     Nothing -> f
     -- just for debugging
-    trans (InsnInsn (n `(LGA.:=)` insn)) f = 
+    trans (InsnInsn (n := insn)) f =
         DM.insert n (SbChecked n DS.empty False) f
     -- just for debugging
-    trans ti@(TermInsn (n `(LGA.:=)` term) _) f = 
+    trans ti@(TermInsn (n := term) _) f = 
         let newF = DM.insert n (SbChecked n DS.empty False) f
         in CH.distributeFact ti newF
     trans ti@TermInsn{} f = CH.distributeFact ti f
@@ -102,7 +105,7 @@ instance SbCheckable (PhInstruction e x) where
 
 instance SbCheckable x => SbCheckable (LGAI.Named x) where
     getChecks (LGA.Do it) f = getChecks it f
-    getChecks (_ `(LGA.:=)` it) f = getChecks it f
+    getChecks (_ := it) f = getChecks it f
 
 instance SbCheckable LGAI.Instruction where
     getChecks LGAI.Load{LGAI.address = addrOp} f = getChecks addrOp f

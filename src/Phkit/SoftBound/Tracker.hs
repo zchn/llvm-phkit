@@ -14,6 +14,9 @@ import qualified LLVM.General.AST.Global as LGAG
 import qualified LLVM.General.AST.Instruction as LGAI
 import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
+
+import LLVM.General.AST (Named(..))
+
 import Phkit.Phire
 import Phkit.Analysis
 import Phkit.Transform
@@ -40,9 +43,9 @@ sbTrackerTransfer = CH.mkBTransfer trans
                 CH.successorFacts n fbase
 
 maybeGetTrackedPtr :: LGA.Named LGA.Instruction -> Maybe (LGA.Name, LGA.Name)
-maybeGetTrackedPtr (tracker_name `(LGA.:=)` (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
+maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
     Just (arg_ptr, tracker_name)
-maybeGetTrackedPtr (tracker_name `(LGA.:=)` (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
+maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
     Just (arg_ptr, tracker_name)
 
 maybeAddTrack
@@ -51,8 +54,8 @@ maybeAddTrack
     -> CH.SimpleFuelMonad (CH.Graph PhInstruction e x)
 maybeAddTrack phI@NameInsn{} _ = return $ phGUnit phI
 maybeAddTrack phI@(InsnInsn (LGA.Do _)) f = return $ phGUnit phI
-maybeAddTrack phI@(InsnInsn (name `(LGA.:=)` insn)) f = return $ phGUnit phI
--- maybeAddTrack phI@(InsnInsn (name LGA.:= insn)) f = return $ appendTracks
+maybeAddTrack phI@(InsnInsn (name := insn)) f = return $ phGUnit phI
+-- maybeAddTrack phI@(InsnInsn (name := insn)) f = return $ appendTracks
 --   phI (mkTrackCalls name insn)
 maybeAddTrack phI@(TermInsn (LGA.Do _) _) f = return $ phGUnit phI
 
