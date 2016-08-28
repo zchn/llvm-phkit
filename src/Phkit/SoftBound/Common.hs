@@ -1,4 +1,4 @@
-module Phkit.SoftBound.Common (sbTrackType) where
+module Phkit.SoftBound.Common (withMetadata) where
 
 import qualified LLVM.General.AST as LGA
 import qualified LLVM.General.AST.AddrSpace as LGAA
@@ -9,13 +9,10 @@ import qualified LLVM.General.AST.Instruction as LGAI
 import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
 
-sbTrackType :: LGAT.Type
-sbTrackType = LGAT.StructureType {
-  LGAT.isPacked = False,
-  LGAT.elementTypes = [
-      LGAT.PointerType {
-          LGAT.pointerReferent = LGAT.VoidType,
-          LGAT.pointerAddrSpace = LGAA.AddrSpace 0 },
-      LGAT.PointerType {
-          LGAT.pointerReferent = LGAT.VoidType,
-          LGAT.pointerAddrSpace = LGAA.AddrSpace 0 }]}
+withMetadata :: LGA.Instruction -> (String, String) -> LGA.Instruction
+withMetadata insn kv = insn { LGA.metadata insn `withMeta` kv }
+  
+withMeta :: LGA.InstructionMetadata -> (String, String)
+  -> LGA.InstructionMetadata
+withMeta orig (k, v) =
+  orig ++ [(k, LGA.MetadataNode [Just $ LGA.MetadataStringOperand v])]

@@ -53,30 +53,6 @@ sbCheckTransfer = CH.mkFTransfer trans
         CH.distributeFact ti newF
     trans ti@TermInsn{} f = CH.distributeFact ti f
 
-maybeGetCheckedPtr :: LGA.Instruction ->
-  Maybe (LGA.Name, LGA.Name, LGA.Name, Int)
-maybeGetCheckedPtr (
-  LGAI.Call { LGAI.function =
-                Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (
-                                                 LGA.Name "sbcheck"))),
-              LGAI.arguments = [
-                ((LGAO.LocalReference _ arg_ptr), _),
-                ((LGAO.LocalReference _ arg_ptr_base), _),
-                ((LGAO.LocalReference _ arg_ptr_bound), _),
-                ((LGAO.ConstantOperand (LGAC.Int _ arg_ptr_size')), _)] }) =
-  Just (arg_ptr, arg_ptr_base, arg_ptr_bound, fromInteger arg_ptr_size')
-maybeGetCheckedPtr _ = Nothing
-
-maybeGetSavedPptr :: LGA.Instruction -> Maybe LGA.Name
-maybeGetSavedPptr (
-  LGAI.Call { LGAI.function =
-                Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (
-                                                 LGA.Name "sbsave"))),
-              LGAI.arguments = [
-                ((LGAO.LocalReference _ arg_pptr), _), _, _] }) =
-  Just arg_pptr
-maybeGetSavedPptr _ = Nothing
-
 softBoundRewrite :: PhFwdRewrite SbFunctionCheckFact
 softBoundRewrite =
   CH.mkFRewrite (\phI f -> fmap Just $ maybeAddCheck phI f)
@@ -172,41 +148,6 @@ sizeOfType LGAT.FunctionType{} = 255
 _nBitsToNBytes :: DW.Word32 -> Int
 _nBitsToNBytes nBits =
   fromInteger ((toInteger nBits - 1) `div` 8 + 1)
-
-mkSbSave :: LGA.Name -> LGA.Name -> LGA.Name -> LGA.Instruction
-mkSbSave ptr_ptr ptr_base ptr_bound =
-  LGAI.Call {
-    LGAI.tailCallKind = Nothing,
-    LGAI.callingConvention = LGACa.C,
-    LGAI.returnAttributes = [],
-    LGAI.function = Right $ LGAO.ConstantOperand $ LGAC.GlobalReference
-                    (LGAT.FunctionType {
-                        LGAT.resultType = LGAT.VoidType,
-                        LGAT.argumentTypes = [],
-                        LGAT.isVarArg = False }) $ LGA.Name "sbsave",
-    LGAI.arguments = [(LGAO.LocalReference LGAT.VoidType ptr_ptr, []),
-                      (LGAO.LocalReference LGAT.VoidType ptr_base, []),
-                      (LGAO.LocalReference LGAT.VoidType ptr_bound, [])],
-    LGAI.functionAttributes = [],
-    LGAI.metadata = [] }
-
-mkSbCheck :: LGA.Name -> LGA.Name -> LGA.Name -> LGAC.Constant -> LGA.Instruction
-mkSbCheck ptr ptr_base ptr_bound ptr_size =
-  LGAI.Call {
-    LGAI.tailCallKind = Nothing,
-    LGAI.callingConvention = LGACa.C,
-    LGAI.returnAttributes = [],
-    LGAI.function = Right $ LGAO.ConstantOperand $ LGAC.GlobalReference
-                    (LGAT.FunctionType {
-                        LGAT.resultType = LGAT.VoidType,
-                        LGAT.argumentTypes = [],
-                        LGAT.isVarArg = False }) $ LGA.Name "sbcheck",
-    LGAI.arguments = [(LGAO.LocalReference LGAT.VoidType ptr, []),
-                      (LGAO.LocalReference LGAT.VoidType ptr_base, []),
-                      (LGAO.LocalReference LGAT.VoidType ptr_bound, []),
-                      (LGAO.ConstantOperand ptr_size, [])],
-    LGAI.functionAttributes = [],
-    LGAI.metadata = [] }
 
 -- State transition:
 -- SbBottom -> SbChecked
