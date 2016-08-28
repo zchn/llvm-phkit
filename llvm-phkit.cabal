@@ -27,6 +27,8 @@ library
                      , Phkit.IO
                      , Phkit.Phire
                      , Phkit.SoftBound.Checker
+                     , Phkit.SoftBound.Common
+                     , Phkit.SoftBound.Lang
                      , Phkit.SoftBound.Tracker
                      , Phkit.SoftBoundTransform
                      , Phkit.Transform

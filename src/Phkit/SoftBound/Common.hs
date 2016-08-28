@@ -10,7 +10,7 @@ import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
 
 withMetadata :: LGA.Instruction -> (String, String) -> LGA.Instruction
-withMetadata insn kv = insn { LGA.metadata insn `withMeta` kv }
+withMetadata insn kv = insn { LGA.metadata = LGA.metadata insn `withMeta` kv }
   
 withMeta :: LGA.InstructionMetadata -> (String, String)
   -> LGA.InstructionMetadata
