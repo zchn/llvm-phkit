@@ -32,6 +32,15 @@ softBoundAddTrackResultOf modu =
         sbTrackTransfer
         sbTrackRewrite
 
+addTrackedPtrToFact :: LGA.Name -- ^ ptr
+  -> LGA.Name -- ^ meta
+  -> SbFunctionTrackFact -- ^ f
+  -> SbFunctionTrackFact
+addTrackedPtrToFact ptr meta f =
+  let currSt = DM.findWithDefault SbTBottom ptr f
+      newSt = justJoinSbNameTrackState currSt (SbTTracked meta)
+  in DM.insert ptr newSt f
+
 sbTrackTransfer :: PhBwdTransfer SbFunctionTrackFact
 sbTrackTransfer = CH.mkBTransfer trans
   where
@@ -39,7 +48,11 @@ sbTrackTransfer = CH.mkBTransfer trans
           -> CH.Fact x SbFunctionTrackFact
           -> SbFunctionTrackFact
     trans NameInsn{} f = f
-    trans InsnInsn{} f = f
+    trans (InsnInsn n) f =
+      case maybeGetTrackedPtr n of
+        Just (ptr, ptr_meta) ->
+          addTrackedPtrToFact ptr ptr_meta f
+        Nothing -> f
     trans n@(TermInsn term ls) fbase =
         case ls of
             [] -> CH.fact_bot sbFunctionTrackLattice

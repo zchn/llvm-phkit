@@ -25,7 +25,8 @@ becomes
 
 -}
 module Phkit.SoftBound.Lang
-       (maybeGetCheckedPtr, maybeGetSavedPptr, mkSbCheck, mkSbSave, mkSbLoad,
+       (maybeGetCheckedPtr, maybeGetSavedPptr, maybeGetTrackedPtr,
+        mkSbCheck, mkSbSave, mkSbLoad,
         sbMetaType)
        where
 
@@ -156,9 +157,9 @@ mkSbLoad meta ptr ptr_ptr =
 -- | ptr = sbextractptr(ptr_and_meta)
 -- | ptr_meta = sbextractmeta(ptr, ptr_and_meta)
 
-
 maybeGetTrackedPtr :: LGA.Named LGA.Instruction -> Maybe (LGA.Name, LGA.Name)
 maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
     Just (arg_ptr, tracker_name)
 -- maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
 --     Just (arg_ptr, tracker_name)
+maybeGetTrackedPtr other = Nothing
