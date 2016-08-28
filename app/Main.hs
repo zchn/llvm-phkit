@@ -1,65 +1,57 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
-
 import qualified Compiler.Hoopl as CH
 import qualified Control.Applicative as CA
-
-import Control.Exception (Exception, throwIO)
-
-import Data.Either (Either(..))
-
-import Data.Typeable (Typeable)
-
-import LLVM.General.AST (Module)
-
-import Phkit.IO (
-  genBitcodeWithTransform, genElfWithTransform)
-
+import qualified Control.Exception as CE -- (Exception, throwIO)
+import qualified Data.Either as DE -- (Either(..))
+import qualified Data.Typeable as DT -- (Typeable)
+import qualified LLVM.General.AST as LGA -- (Module)
+import qualified System.Environment as SE -- (getArgs)
+import Phkit.IO (genBitcodeWithTransform, genElfWithTransform)
 import Phkit.Phire
-
-import System.Environment (getArgs)
-
+import Phkit.SoftBoundTransform
 import Phkit.Experimental
 
-data MainException = InvalidArgument [String]
-                   | UnknownTransform String
-                   deriving (Typeable, Show)
+data MainException
+    = InvalidArgument [String]
+    | UnknownTransform String
+    deriving (DT.Typeable,Show)
 
-instance Exception MainException
+instance CE.Exception MainException
 
-toyTransform :: Module -> Module
+toyTransform :: LGA.Module -> LGA.Module
 toyTransform = id
 
-toyPhireTransform :: Module -> Module
-toyPhireTransform m = finalizeModule $ CH.liftFuel $ phModuleToModule CA.<$>
-  phModuleFromModule m
+toyPhireTransform :: LGA.Module -> LGA.Module
+toyPhireTransform m = 
+    finalizeModule $ CH.liftFuel $ phModuleToModule CA.<$> phModuleFromModule m
 
-getTransformByName :: String -> Either MainException (Module -> Module)
+getTransformByName :: String -> Either MainException (LGA.Module -> LGA.Module)
 getTransformByName "toy" = Right toyTransform
 getTransformByName "toyPhire" = Right toyPhireTransform
+getTransformByName "softbound" = Right softBoundRewriteResultOf
 getTransformByName other = Left $ UnknownTransform other
 
-chainTransforms :: [String] -> Either MainException (Module -> Module)
+chainTransforms :: [String] -> Either MainException (LGA.Module -> LGA.Module)
 chainTransforms [] = Right id
-chainTransforms (h:t) =
-  case getTransformByName h of
-    Right headTransform ->
-      case chainTransforms t of
-        Right tailTransform -> Right (tailTransform . headTransform)
+chainTransforms (h:t) = 
+    case getTransformByName h of
+        Right headTransform -> 
+            case chainTransforms t of
+                Right tailTransform -> Right (tailTransform . headTransform)
+                Left e -> Left e
         Left e -> Left e
-    Left e -> Left e
-
 
 runMain :: [String] -> IO ()
-runMain (inFile:(outFile:transforms)) =
-  case chainTransforms transforms of
-    Right transform -> do
-      genBitcodeWithTransform inFile outFile transform
-      genElfWithTransform inFile (outFile ++ ".out") transform
-    Left e -> throwIO e
-runMain other =
-  throwIO $ InvalidArgument other
+runMain (inFile:(outFile:transforms)) = 
+    case chainTransforms transforms of
+        Right transform -> do
+            genBitcodeWithTransform inFile outFile transform
+            genElfWithTransform inFile (outFile ++ ".out") transform
+        Left e -> CE.throwIO e
+runMain other = CE.throwIO $ InvalidArgument other
 
 -- | 'main' runs the main program
-main :: IO ()
-main = getArgs >>= runMain
+main
+    :: IO ()
+main = SE.getArgs >>= runMain
