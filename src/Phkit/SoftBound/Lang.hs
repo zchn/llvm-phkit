@@ -23,10 +23,9 @@ becomes
 > ptr = sbextractptr(ptr_and_meta)
 > ptr_meta = sbextractmeta(ptr, ptr_and_meta)
 
-
-
 -}
-module Phkit.SoftBound.Lang (sbTrackType) where
+module Phkit.SoftBound.Lang (maybeGetCheckedPtr, maybeGetSavedPptr,
+                             mkSbCheck, mkSbSave, sbMetaType) where
 
 import qualified LLVM.General.AST as LGA
 import qualified LLVM.General.AST.AddrSpace as LGAA
@@ -53,7 +52,7 @@ _mkSbCall :: LGA.Type -- ^ resultType
   -> String -- ^ function name
   -> [LGA.Operand] -- ^ args
   -> LGA.Instruction
-_mkSbSave retT name args =
+_mkSbCall retT name args =
   LGAI.Call {
   LGAI.tailCallKind = Nothing,
   LGAI.callingConvention = LGACa.C,
@@ -107,7 +106,7 @@ maybeGetSavedPptr _ = Nothing
 -- | ptr_meta = sbinit(ptr, size)
 mkSbInit :: LGA.Name -- ^ ptr_meta
   -> LGA.Name -- ^ ptr
-  -> LGA.Constant -- ^ size
+  -> LGAC.Constant -- ^ size
   -> LGA.Named LGA.Instruction
 mkSbInit ptr_meta ptr size = ptr_meta LGA.:= _mkSbCall sbMetaType "sbinit" [
   LGAO.LocalReference LGAT.VoidType ptr,
@@ -123,7 +122,7 @@ mkSbCopy meta ptr meta0 = meta LGA.:= _mkSbCall sbMetaType "sbcopy" [
 mkSbLoad :: LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
 mkSbLoad meta ptr_ptr = meta LGA.:= _mkSbCall sbMetaType "sbload" [
   LGAO.LocalReference LGAT.VoidType ptr_ptr ]
-  
+
 -- | ptr_and_meta = sbfun_...
 
 -- | ptr = sbextractptr(ptr_and_meta)

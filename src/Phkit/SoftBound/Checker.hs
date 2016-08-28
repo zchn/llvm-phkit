@@ -17,6 +17,7 @@ import qualified LLVM.General.AST.Type as LGAT
 import Phkit.Analysis
 import Phkit.Phire
 import Phkit.Transform
+import Phkit.SoftBound.Lang
 
 softBoundAddCheckResultOf :: LGA.Module -> LGA.Module
 softBoundAddCheckResultOf modu = fwdTransformResultOf modu
@@ -31,10 +32,10 @@ sbCheckTransfer = CH.mkFTransfer trans
     trans NameInsn{} f = f
     trans (InsnInsn (LGA.Do insn)) f =
       case maybeGetCheckedPtr insn of
-        Just (ptr, ptr_base, ptr_bound, ptr_size) ->
+        Just (ptr, ptr_meta, ptr_size) ->
           let pstate = DM.findWithDefault SbUnreachableTop ptr f
               newState = justJoinSbNameCheckState pstate (
-                SbChecked ptr_base ptr_bound (DS.singleton ptr_size) False)
+                SbChecked ptr_meta (DS.singleton ptr_size) False)
           in
             DM.insert ptr newState f
         Nothing ->
@@ -46,10 +47,10 @@ sbCheckTransfer = CH.mkFTransfer trans
                 Nothing -> f
             Nothing -> f
     -- just for debugging
-    trans (InsnInsn (n LGA.:= insn)) f = DM.insert n (SbChecked n n DS.empty False) f
+    trans (InsnInsn (n LGA.:= insn)) f = DM.insert n (SbChecked n DS.empty False) f
     -- just for debugging
     trans ti@(TermInsn (n LGA.:= term) _) f =
-      let newF = DM.insert n (SbChecked n n DS.empty False) f in
+      let newF = DM.insert n (SbChecked n DS.empty False) f in
         CH.distributeFact ti newF
     trans ti@TermInsn{} f = CH.distributeFact ti f
 
@@ -99,8 +100,8 @@ instance SbCheckable LGAI.Instruction where
       maybeAddSbSave :: LGA.Name -> SbFunctionCheckFact -> [LGA.Instruction]
       maybeAddSbSave ptr_ptr fact =
         case DM.lookup ptr_ptr fact of
-          Just (SbChecked ptr_base ptr_bound size_set False) ->
-            [mkSbSave ptr_ptr ptr_base ptr_bound]
+          Just (SbChecked ptr_meta size_set False) ->
+            [mkSbSave ptr_ptr ptr_meta]
           _ -> []
   getChecks LGAI.CmpXchg { LGAI.address = addrOp} f = getChecks addrOp f
   getChecks LGAI.AtomicRMW { LGAI.address = addrOp } f = getChecks addrOp f
@@ -118,11 +119,11 @@ instance SbCheckable LGAO.Operand where
     let pstate = DM.lookup n f
         psize = sizeOfPtrType t in
       case pstate of
-        Just (SbChecked ptr_base ptr_bound size_set _) ->
+        Just (SbChecked ptr_meta size_set _) ->
           if DS.member psize size_set then
             []
           else
-            [ mkSbCheck n ptr_base ptr_bound (LGAC.Int 8 $ toInteger $
+            [ mkSbCheck n ptr_meta (LGAC.Int 8 $ toInteger $
                                               sizeOfPtrType t) ]
         _ -> []
   getChecks _ _ = []
@@ -152,8 +153,7 @@ _nBitsToNBytes nBits =
 -- State transition:
 -- SbBottom -> SbChecked
 data SbNameCheckState = SbBottom |
-  SbChecked { sbCheckedBase :: LGA.Name,
-              sbCheckedBound :: LGA.Name,
+  SbChecked { sbCheckedMeta :: LGA.Name,
               sbCheckedSizes :: DS.Set Int,
               sbSaved :: Bool } | SbUnreachableTop
   deriving (Eq, Show)
@@ -179,8 +179,8 @@ justJoinSbNameCheckState f1 f2 | f1 == f2 = f1
 -- SbBottom
 justJoinSbNameCheckState SbBottom f = f
 -- SbChecked
-justJoinSbNameCheckState (SbChecked bs1 bd1 ss1 sv1) (SbChecked bs2 bd2 ss2 sv2)
-  | (bs1, bd1) == (bs2, bd2) = SbChecked bs1 bd1 (DS.union ss1 ss2) (sv1 || sv2)
+justJoinSbNameCheckState (SbChecked meta1 ss1 sv1) (SbChecked meta2 ss2 sv2)
+  | meta1 == meta2 = SbChecked meta1 (DS.union ss1 ss2) (sv1 || sv2)
 justJoinSbNameCheckState SbChecked{} SbChecked{} = SbUnreachableTop
 justJoinSbNameCheckState SbChecked{} SbUnreachableTop = SbUnreachableTop
 -- Reverse, must be the last pattern
