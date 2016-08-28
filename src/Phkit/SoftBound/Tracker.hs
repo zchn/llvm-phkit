@@ -79,15 +79,14 @@ maybeAddTrack phI@(InsnInsn (ptr := LGA.Load { LGAI.address = LGAO.LocalReferenc
     ptr_meta <- CH.liftFuel freshName
     return $ (phGUnit phI) `CH.catGraphNodeOO` (InsnInsn $ mkSbLoad ptr_meta ptr ptr_ptr)
   else return $ phGUnit phI
+maybeAddTrack phI@(InsnInsn (ptr := LGA.Alloca { LGA.allocatedType = ty, LGA.numElements = maybeC, LGA.alignment = align })) f =
+  if DM.findWithDefault SbTBottom ptr f == SbTBottom then do
+    ptr_meta <- CH.liftFuel freshName
+    return $ (phGUnit phI) `CH.catGraphNodeOO` (InsnInsn $ mkSbInit ptr_meta ptr (sizeOfType ty) maybeC align)
+  else return $ phGUnit phI
 maybeAddTrack phI@(InsnInsn (name := insn)) f = return $ phGUnit phI
 maybeAddTrack phI@(TermInsn (LGA.Do _) _) f = return $ phGUnit phI
 
--- appendTracks :: PhInstruction e CH.O -> [LGA.Instruction] ->
---   CH.Graph PhInstruction e CH.O
--- b = getB() | b_base, b_bound
--- c = getC() | c_base, c_bound
--- a = b + c  | a_base = b_base + c_base, a_bound = b_bound + c_bound
--- p = (void *)a | p_base = a_base, p_bound = a_bound
 class SbTrackable t  where
     getTrack :: t -> SbFunctionTrackFact -> NameLabelMapM [LGA.Instruction]
 

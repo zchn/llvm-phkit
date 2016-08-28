@@ -148,27 +148,6 @@ instance SbCheckable LGAO.Operand where
                _ -> []
     getChecks _ _ = []
 
-sizeOfPtrType :: LGA.Type -> Int
-sizeOfPtrType (LGAT.PointerType t _) = sizeOfType t
-sizeOfPtrType _ = 254
-
-sizeOfType :: LGA.Type -> Int
-sizeOfType (LGAT.IntegerType nBits) = _nBitsToNBytes nBits
-sizeOfType (LGAT.PointerType _ _) = 8 -- TODO(zchn): Improve
-sizeOfType (LGAT.FloatingPointType nBits _) = _nBitsToNBytes nBits
-sizeOfType (LGAT.VectorType eCount eType) = 
-    fromInteger (toInteger eCount) * (sizeOfType eType)
-sizeOfType (LGAT.StructureType _ eTypes) = sum $ map sizeOfType eTypes
-sizeOfType (LGAT.ArrayType eCount eType) = 
-    fromInteger (toInteger eCount) * (sizeOfType eType)
-sizeOfType LGAT.NamedTypeReference{} = 255
-sizeOfType LGAT.MetadataType{} = 255
-sizeOfType LGAT.VoidType = 255
-sizeOfType LGAT.FunctionType{} = 255
-
-_nBitsToNBytes :: DW.Word32 -> Int
-_nBitsToNBytes nBits = fromInteger ((toInteger nBits - 1) `div` 8 + 1)
-
 -- State transition:
 -- SbBottom -> SbChecked
 data SbNameCheckState

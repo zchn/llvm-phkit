@@ -26,10 +26,11 @@ becomes
 -}
 module Phkit.SoftBound.Lang
        (maybeGetCheckedPtr, maybeGetSavedPptr, maybeGetTrackedPtr,
-        mkSbCheck, mkSbSave, mkSbLoad,
-        sbMetaType)
+        mkSbCheck, mkSbInit, mkSbSave, mkSbLoad, sbMetaType)
        where
 
+import qualified Data.Maybe as DMa
+import qualified Data.Word as DW
 import qualified LLVM.General.AST as LGA
 import qualified LLVM.General.AST.AddrSpace as LGAA
 import qualified LLVM.General.AST.CallingConvention as LGACa
@@ -38,10 +39,9 @@ import qualified LLVM.General.AST.Global as LGAG
 import qualified LLVM.General.AST.Instruction as LGAI
 import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
-
 import LLVM.General.AST (Named(..))
 
-sbPtrBaseType =
+sbPtrBaseType = 
     LGAT.PointerType
     { LGAT.pointerReferent = LGAT.VoidType
     , LGAT.pointerAddrSpace = LGAA.AddrSpace 0
@@ -123,14 +123,19 @@ maybeGetSavedPptr _ = Nothing
 mkSbInit
     :: LGA.Name -- ^ ptr_meta
     -> LGA.Name -- ^ ptr
-    -> LGAC.Constant -- ^ size
+    -> Int -- ^ size
+    -> Maybe LGA.Operand -- ^ count
+    -> DW.Word32 -- ^ alignment
     -> LGA.Named LGA.Instruction
-mkSbInit ptr_meta ptr size = 
+mkSbInit ptr_meta ptr size count align = 
     ptr_meta :=
     _mkSbCall
         sbMetaType
         "sbinit"
-        [LGAO.LocalReference LGAT.VoidType ptr, LGAO.ConstantOperand size]
+        [LGAO.LocalReference LGAT.VoidType ptr,
+         LGAO.ConstantOperand (LGAC.Int 32 $ toInteger size),
+         DMa.fromMaybe (LGAO.ConstantOperand (LGAC.Int 32 1)) count,
+         LGAO.ConstantOperand (LGAC.Int 32 $ toInteger align)]
 
 -- | ptr_meta = sbcopy(ptr, ptr_meta)
 mkSbCopy
@@ -148,18 +153,21 @@ mkSbLoad
     :: LGA.Name -> LGA.Name -> LGA.Name -> LGA.Named LGA.Instruction
 mkSbLoad meta ptr ptr_ptr = 
     meta :=
-    _mkSbCall sbMetaType "sbload" [LGAO.LocalReference LGAT.VoidType ptr,
-                                   LGAO.LocalReference LGAT.VoidType ptr_ptr]
-
-
+    _mkSbCall
+        sbMetaType
+        "sbload"
+        [ LGAO.LocalReference LGAT.VoidType ptr
+        , LGAO.LocalReference LGAT.VoidType ptr_ptr]
 
 -- | ptr_and_meta = sbfun_...
 -- | ptr = sbextractptr(ptr_and_meta)
 -- | ptr_meta = sbextractmeta(ptr, ptr_and_meta)
-
-maybeGetTrackedPtr :: LGA.Named LGA.Instruction -> Maybe (LGA.Name, LGA.Name)
-maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
-    Just (arg_ptr, tracker_name)
--- maybeGetTrackedPtr (tracker_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
---     Just (arg_ptr, tracker_name)
+maybeGetTrackedPtr
+    :: LGA.Named LGA.Instruction -> Maybe (LGA.Name, LGA.Name)
+maybeGetTrackedPtr (meta_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbload"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
+    Just (arg_ptr, meta_name)
+maybeGetTrackedPtr (meta_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbinit"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_]})) = 
+    Just (arg_ptr, meta_name)
+-- maybeGetTrackedPtr (meta_name := (LGAI.Call{LGAI.function = Right (LGAO.ConstantOperand (LGAC.GlobalReference _ (LGA.Name "sbupdate"))),LGAI.arguments = [(LGAO.LocalReference _ arg_ptr,_),_,_]})) = 
+--     Just (arg_ptr, meta_name)
 maybeGetTrackedPtr other = Nothing
