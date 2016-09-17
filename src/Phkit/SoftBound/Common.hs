@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 
 module Phkit.SoftBound.Common
-       (withMetadata, sizeOfType, sizeOfPtrType, successorFacts) where
+       (changeUnless, withMetadata, sizeOfType, sizeOfPtrType, successorFacts) where
 
 import qualified Compiler.Hoopl as CH
 import qualified Data.Maybe as DMa
@@ -79,3 +79,7 @@ sizeOfType LGAT.FunctionType{} = 255
 
 _nBitsToNBytes :: DW.Word32 -> Int
 _nBitsToNBytes nBits = fromInteger ((toInteger nBits - 1) `div` 8 + 1)
+
+changeUnless
+    :: Bool -> CH.ChangeFlag
+changeUnless bo = CH.changeIf (not bo)

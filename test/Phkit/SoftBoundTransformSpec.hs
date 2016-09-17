@@ -27,7 +27,7 @@ spec =
               let newMod = softBoundRewriteResultOf modu
               origModString <- ioStringOfAstModule modu
               newModString <- ioStringOfAstModule newMod
-              newModString `shouldContain` "call void @sbloadhaha"
+              newModString `shouldContain` "call void @sbload"
               newModString `shouldContain`
                   "define internal i32 @interpret_threaded(i8* %opcodes) #1 {"
        it "inserts sbfunc." $

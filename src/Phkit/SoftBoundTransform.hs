@@ -22,8 +22,15 @@ import Phkit.Transform
 
 softBoundRewriteResultOf :: LGA.Module -> LGA.Module
 softBoundRewriteResultOf = 
-    softBoundAddCheckResultOf .
-    softBoundAddTrackResultOf . softBoundAddHeaderResultOf
+    softBoundMainResultOf . softBoundAddHeaderResultOf
+
+softBoundMainResultOf :: LGA.Module -> LGA.Module
+softBoundMainResultOf modu = 
+    fwdTransformResultOf
+        modu
+        sbFunctionLattice
+        sbTransfer
+        sbRewrite
 
 softBoundAddHeaderResultOf :: LGA.Module -> LGA.Module
 softBoundAddHeaderResultOf modu@LGA.Module{LGA.moduleDefinitions = defs} = 
