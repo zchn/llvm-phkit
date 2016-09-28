@@ -1,6 +1,9 @@
 {-# LANGUAGE GADTs #-}
 
-module Phkit.SoftBound.Lattice (SbFunctionFact, SbNameState(..), sbFunctionLattice, justJoinSbNameState, joinSbNameState) where
+module Phkit.SoftBound.Lattice
+       (SbFunctionFact, SbNameState(..), sbFunctionLattice,
+        justJoinSbNameState, joinSbNameState)
+       where
 
 import qualified Compiler.Hoopl as CH
 import qualified Data.Map as DM
@@ -21,31 +24,27 @@ import Phkit.SoftBound.Common
 import Phkit.SoftBound.Lang
 
 data SbNameState
-    = SbBottom
-    | SbTracked { sbTrackedMeta :: LGA.Name }
-    | SbSbName
-    | SbUnreachableTop
+    = SbBottom 
+    | SbTracked { sbTrackedMeta :: LGA.Name}
+    | SbSbName 
+    | SbUnreachableTop 
     deriving (Eq,Show)
 
 sbNameLattice :: CH.DataflowLattice SbNameState
-sbNameLattice =
+sbNameLattice = 
     CH.DataflowLattice
     { CH.fact_name = "sbNameLattice"
     , CH.fact_bot = SbBottom
-    , CH.fact_join = \_ (CH.OldFact oldF) (CH.NewFact newF) ->
+    , CH.fact_join = \_ (CH.OldFact oldF) (CH.NewFact newF) -> 
                           joinSbNameState oldF newF
     }
 
-joinSbNameState :: SbNameState
-                     -> SbNameState
-                     -> (CH.ChangeFlag, SbNameState)
-joinSbNameState oldF newF =
+joinSbNameState :: SbNameState -> SbNameState -> (CH.ChangeFlag, SbNameState)
+joinSbNameState oldF newF = 
     let joined = justJoinSbNameState oldF newF
     in (CH.changeIf (joined /= oldF), joined)
 
-justJoinSbNameState :: SbNameState
-                         -> SbNameState
-                         -> SbNameState
+justJoinSbNameState :: SbNameState -> SbNameState -> SbNameState
 -- Equal, must be the first pattern
 justJoinSbNameState f1 f2
   | f1 == f2 = f1

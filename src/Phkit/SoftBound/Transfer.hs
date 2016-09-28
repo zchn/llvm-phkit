@@ -24,15 +24,13 @@ import Phkit.SoftBound.Lattice
 sbTransfer :: PhFwdTransfer SbFunctionFact
 sbTransfer = CH.mkFTransfer trans
   where
-    trans :: PhInstruction e x
-          -> SbFunctionFact
-          -> CH.Fact x SbFunctionFact
+    trans :: PhInstruction e x -> SbFunctionFact -> CH.Fact x SbFunctionFact
     trans NameInsn{} f = f
     trans (InsnInsn (LGA.Do insn)) f = f
     -- just for debugging
     trans (InsnInsn (n := insn)) f = DM.insert n (SbTracked n) f
     -- just for debugging
-    trans ti@(TermInsn (n := term) _) f =
+    trans ti@(TermInsn (n := term) _) f = 
         let newF = DM.insert n (SbTracked n) f
         in CH.distributeFact ti newF
     trans ti@TermInsn{} f = CH.distributeFact ti f

@@ -132,10 +132,10 @@ mkSbInit ptr_meta ptr size count align =
     _mkSbCall
         sbMetaType
         "sbinit"
-        [LGAO.LocalReference LGAT.VoidType ptr,
-         LGAO.ConstantOperand (LGAC.Int 32 $ toInteger size),
-         DMa.fromMaybe (LGAO.ConstantOperand (LGAC.Int 32 1)) count,
-         LGAO.ConstantOperand (LGAC.Int 32 $ toInteger align)]
+        [ LGAO.LocalReference LGAT.VoidType ptr
+        , LGAO.ConstantOperand (LGAC.Int 32 $ toInteger size)
+        , DMa.fromMaybe (LGAO.ConstantOperand (LGAC.Int 32 1)) count
+        , LGAO.ConstantOperand (LGAC.Int 32 $ toInteger align)]
 
 -- | ptr_meta = sbcopy(ptr, ptr_meta)
 mkSbCopy
