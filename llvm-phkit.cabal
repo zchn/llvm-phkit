@@ -26,13 +26,11 @@ library
                      , Phkit.FlattenTransform
                      , Phkit.IO
                      , Phkit.Phire
-                     , Phkit.SoftBound.Checker
                      , Phkit.SoftBound.Common
                      , Phkit.SoftBound.Lang
                      , Phkit.SoftBound.Lattice
                      , Phkit.SoftBound.Transfer
                      , Phkit.SoftBound.Rewrite
-                     , Phkit.SoftBound.Tracker
                      , Phkit.SoftBoundTransform
                      , Phkit.Transform
   build-depends:       base >= 4.7 && < 5

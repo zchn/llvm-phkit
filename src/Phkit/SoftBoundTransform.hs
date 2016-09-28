@@ -15,17 +15,18 @@ import qualified LLVM.General.AST.Operand as LGAO
 import qualified LLVM.General.AST.Type as LGAT
 import Phkit.Analysis
 import Phkit.Phire
-import Phkit.SoftBound.Checker
 import Phkit.SoftBound.Lang
-import Phkit.SoftBound.Tracker
+import Phkit.SoftBound.Lattice
+import Phkit.SoftBound.Transfer
+import Phkit.SoftBound.Rewrite
 import Phkit.Transform
 
 softBoundRewriteResultOf :: LGA.Module -> LGA.Module
-softBoundRewriteResultOf = 
+softBoundRewriteResultOf =
     softBoundMainResultOf . softBoundAddHeaderResultOf
 
 softBoundMainResultOf :: LGA.Module -> LGA.Module
-softBoundMainResultOf modu = 
+softBoundMainResultOf modu =
     fwdTransformResultOf
         modu
         sbFunctionLattice
@@ -33,7 +34,7 @@ softBoundMainResultOf modu =
         sbRewrite
 
 softBoundAddHeaderResultOf :: LGA.Module -> LGA.Module
-softBoundAddHeaderResultOf modu@LGA.Module{LGA.moduleDefinitions = defs} = 
+softBoundAddHeaderResultOf modu@LGA.Module{LGA.moduleDefinitions = defs} =
     modu
     { LGA.moduleDefinitions = LGA.GlobalDefinition
           (LGA.functionDefaults
