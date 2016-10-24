@@ -22,9 +22,9 @@ import Phkit.SoftBound.Lang
 import Phkit.SoftBound.Lattice
 
 sbRewrite :: PhFwdRewrite SbFunctionFact
-sbRewrite = 
+sbRewrite =
     CH.mkFRewrite
-        (\phI f -> 
+        (\phI f ->
               fmap Just $ addSbInsts phI f)
 
 addSbInsts
@@ -44,11 +44,16 @@ addSbPrefix
     :: PhInstruction CH.O x
     -> SbFunctionFact
     -> NameLabelMapFuelM (CH.Graph PhInstruction CH.O CH.O, PhInstruction CH.O x)
-addSbPrefix phI@InsnInsn{} f = 
-    -- TODO: Implement
+addSbPrefix phI@(InsnInsn insn) f = do
+    let ptr_size_pairs = getPtrSizePairsFromInsn insn
+    let ptr_meta_size_tuples = getPtrMetaSizeTuples ptr_size_pairs f
+    let gCheck = mkSbCheckGraph ptr_meta_size_tuples
+    let ptr_pptr_pairs = getPtrPptrPairsFromInsn ins
+n
+    let gLoad = mkSbLoadGraph pptrs
     return
         (CH.GNil, phI)
-addSbPrefix phI@TermInsn{} f = 
+addSbPrefix phI@TermInsn{} f =
     -- TODO: Implement
     return
         (CH.GNil, phI)
@@ -57,7 +62,13 @@ addSbSuffix
     :: PhInstruction CH.O CH.O
     -> SbFunctionFact
     -> NameLabelMapFuelM (CH.Graph PhInstruction CH.O CH.O, PhInstruction CH.O CH.O)
-addSbSuffix phI@InsnInsn{} f = 
+addSbSuffix phI@(InsnInsn (LGA.Do LGA.Store { LGAI.address = addr, LGAI.value = val } )) f =
+                 addSbStoreSuffix phI addr val
+addSbSuffix phI@InsnInsn{} f =
     -- TODO: Implement
     return
         (CH.GNil, phI)
+
+
+addSbStoreSuffix :: PhInstruction CH.O CH.O -> LGA.Operand -> LGA.Operand -> NameLabelMapFuelM (CH.Graph PhInstruction CH.O CH.O, PhInstruction CH.O CH.O)
+addSbStoreSuffix phI addr val = return (CH.GNil, phI)
