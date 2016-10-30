@@ -1,9 +1,12 @@
 {-# LANGUAGE GADTs #-}
 
 module Phkit.SoftBound.Lattice
-       (SbFunctionFact, SbNameState(..), sbFunctionLattice,
-        justJoinSbNameState, joinSbNameState)
-       where
+  ( SbFunctionFact
+  , SbNameState(..)
+  , sbFunctionLattice
+  , justJoinSbNameState
+  , joinSbNameState
+  ) where
 
 import qualified Compiler.Hoopl as CH
 import qualified Data.Map as DM
@@ -24,25 +27,25 @@ import Phkit.SoftBound.Common
 import Phkit.SoftBound.Lang
 
 data SbNameState
-    = SbBottom 
-    | SbTracked { sbTrackedMeta :: LGA.Name}
-    | SbSbName 
-    | SbUnreachableTop 
-    deriving (Eq,Show)
+  = SbBottom
+  | SbTracked { sbTrackedMeta :: LGA.Name}
+  | SbSbName
+  | SbUnreachableTop
+  deriving (Eq, Show)
 
 sbNameLattice :: CH.DataflowLattice SbNameState
-sbNameLattice = 
-    CH.DataflowLattice
-    { CH.fact_name = "sbNameLattice"
-    , CH.fact_bot = SbBottom
-    , CH.fact_join = \_ (CH.OldFact oldF) (CH.NewFact newF) -> 
-                          joinSbNameState oldF newF
-    }
+sbNameLattice =
+  CH.DataflowLattice
+  { CH.fact_name = "sbNameLattice"
+  , CH.fact_bot = SbBottom
+  , CH.fact_join =
+    \_ (CH.OldFact oldF) (CH.NewFact newF) -> joinSbNameState oldF newF
+  }
 
 joinSbNameState :: SbNameState -> SbNameState -> (CH.ChangeFlag, SbNameState)
-joinSbNameState oldF newF = 
-    let joined = justJoinSbNameState oldF newF
-    in (CH.changeIf (joined /= oldF), joined)
+joinSbNameState oldF newF =
+  let joined = justJoinSbNameState oldF newF
+  in (CH.changeIf (joined /= oldF), joined)
 
 justJoinSbNameState :: SbNameState -> SbNameState -> SbNameState
 -- Equal, must be the first pattern
@@ -53,9 +56,9 @@ justJoinSbNameState SbBottom f = f
 -- SbTracked
 justJoinSbNameState (SbTracked meta1) (SbTracked meta2)
   | meta1 == meta2 = SbTracked meta1
-justJoinSbNameState SbTracked{} SbTracked{} = SbUnreachableTop
-justJoinSbNameState SbTracked{} SbSbName{} = SbUnreachableTop
-justJoinSbNameState SbTracked{} SbUnreachableTop = SbUnreachableTop
+justJoinSbNameState SbTracked {} SbTracked {} = SbUnreachableTop
+justJoinSbNameState SbTracked {} SbSbName {} = SbUnreachableTop
+justJoinSbNameState SbTracked {} SbUnreachableTop = SbUnreachableTop
 -- SbSbName
 justJoinSbNameState SbSbName SbSbName = SbSbName
 justJoinSbNameState SbSbName SbUnreachableTop = SbUnreachableTop

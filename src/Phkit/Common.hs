@@ -1,4 +1,6 @@
-module Phkit.Common (prefix) where
+module Phkit.Common
+  ( prefix
+  ) where
 
 prefix :: String
 prefix = "phkit"

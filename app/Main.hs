@@ -13,9 +13,9 @@ import Phkit.SoftBoundTransform
 import Phkit.Experimental
 
 data MainException
-    = InvalidArgument [String]
-    | UnknownTransform String
-    deriving (DT.Typeable,Show)
+  = InvalidArgument [String]
+  | UnknownTransform String
+  deriving (DT.Typeable, Show)
 
 instance CE.Exception MainException
 
@@ -23,8 +23,8 @@ toyTransform :: LGA.Module -> LGA.Module
 toyTransform = id
 
 toyPhireTransform :: LGA.Module -> LGA.Module
-toyPhireTransform m = 
-    finalizeModule $ CH.liftFuel $ phModuleToModule CA.<$> phModuleFromModule m
+toyPhireTransform m =
+  finalizeModule $ CH.liftFuel $ phModuleToModule CA.<$> phModuleFromModule m
 
 getTransformByName :: String -> Either MainException (LGA.Module -> LGA.Module)
 getTransformByName "toy" = Right toyTransform
@@ -34,24 +34,23 @@ getTransformByName other = Left $ UnknownTransform other
 
 chainTransforms :: [String] -> Either MainException (LGA.Module -> LGA.Module)
 chainTransforms [] = Right id
-chainTransforms (h:t) = 
-    case getTransformByName h of
-        Right headTransform -> 
-            case chainTransforms t of
-                Right tailTransform -> Right (tailTransform . headTransform)
-                Left e -> Left e
+chainTransforms (h:t) =
+  case getTransformByName h of
+    Right headTransform ->
+      case chainTransforms t of
+        Right tailTransform -> Right (tailTransform . headTransform)
         Left e -> Left e
+    Left e -> Left e
 
 runMain :: [String] -> IO ()
-runMain (inFile:(outFile:transforms)) = 
-    case chainTransforms transforms of
-        Right transform -> do
-            genBitcodeWithTransform inFile outFile transform
-            genElfWithTransform inFile (outFile ++ ".out") transform
-        Left e -> CE.throwIO e
+runMain (inFile:(outFile:transforms)) =
+  case chainTransforms transforms of
+    Right transform -> do
+      genBitcodeWithTransform inFile outFile transform
+      genElfWithTransform inFile (outFile ++ ".out") transform
+    Left e -> CE.throwIO e
 runMain other = CE.throwIO $ InvalidArgument other
 
 -- | 'main' runs the main program
-main
-    :: IO ()
+main :: IO ()
 main = SE.getArgs >>= runMain
