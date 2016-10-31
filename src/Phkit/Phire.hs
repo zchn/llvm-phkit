@@ -131,7 +131,7 @@ phBodyFromBBs :: [LGA.BasicBlock] -> NameLabelMapM PhBody
 phBodyFromBBs bbs = do
   g <-
     foldl
-      (CM.liftM2 CH.(|*><*|))
+      (CM.liftM2 (CH.|*><*|))
       (return CH.emptyClosedGraph)
       (map phBodyFromBB bbs)
   getBody g
@@ -402,7 +402,7 @@ instance Normalizable (PhInstruction e x) where
 
 instance Normalizable a =>
          Normalizable (LGA.Named a) where
-  normalize (n LGA.:= a) = normalize3 LGA.(:=) n a
+  normalize (n LGA.:= a) = normalize3 (LGA.:=) n a
   normalize (LGA.Do a) = normalize2 LGA.Do a
 
 instance Normalizable LGA.Instruction where

@@ -175,7 +175,7 @@ instance Flattenable t =>
     gvals <- mapM flattenExp vals
     let gvs = map fst gvals
         vals' = map snd gvals
-    return (foldr CH.(<*>) CH.GNil gvs, vals')
+    return (foldr (CH.<*>) CH.GNil gvs, vals')
 
 instance (Flattenable a, Flattenable b) =>
          Flattenable (Either a b) where

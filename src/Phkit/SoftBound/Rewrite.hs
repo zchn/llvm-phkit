@@ -48,8 +48,7 @@ addSbPrefix phI@(InsnInsn insn) f = do
     let ptr_size_pairs = getPtrSizePairsFromInsn insn
     let ptr_meta_size_tuples = getPtrMetaSizeTuples ptr_size_pairs f
     let gCheck = mkSbCheckGraph ptr_meta_size_tuples
-    let ptr_pptr_pairs = getPtrPptrPairsFromInsn ins
-n
+    let ptr_pptr_pairs = getPtrPptrPairsFromInsn insn
     let gLoad = mkSbLoadGraph pptrs
     return
         (CH.GNil, phI)
@@ -72,3 +71,5 @@ addSbSuffix phI@InsnInsn{} f =
 
 addSbStoreSuffix :: PhInstruction CH.O CH.O -> LGA.Operand -> LGA.Operand -> NameLabelMapFuelM (CH.Graph PhInstruction CH.O CH.O, PhInstruction CH.O CH.O)
 addSbStoreSuffix phI addr val = return (CH.GNil, phI)
+
+getPtrSizePairsFromInsn ::
