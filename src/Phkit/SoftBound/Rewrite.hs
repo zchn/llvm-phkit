@@ -49,7 +49,7 @@ addSbPrefix phI@(InsnInsn insn) f = do
     let ptr_meta_size_tuples = getPtrMetaSizeTuples ptr_size_pairs f
     let gCheck = mkSbCheckGraph ptr_meta_size_tuples
     let ptr_pptr_pairs = getPtrPptrPairsFromInsn insn
-    let gLoad = mkSbLoadGraph pptrs
+    let gLoad = mkSbLoadGraph ptr_pptr_pairs
     return
         (CH.GNil, phI)
 addSbPrefix phI@TermInsn{} f =
@@ -72,4 +72,12 @@ addSbSuffix phI@InsnInsn{} f =
 addSbStoreSuffix :: PhInstruction CH.O CH.O -> LGA.Operand -> LGA.Operand -> NameLabelMapFuelM (CH.Graph PhInstruction CH.O CH.O, PhInstruction CH.O CH.O)
 addSbStoreSuffix phI addr val = return (CH.GNil, phI)
 
-getPtrSizePairsFromInsn ::
+getPtrSizePairsFromInsn = error "Not Implemented."
+
+getPtrMetaSizeTuples = error "Not Implemented."
+
+mkSbCheckGraph = error "Not Implemented."
+
+getPtrPptrPairsFromInsn = error "Not Implemented."
+
+mkSbLoadGraph = error "Not Implemented."
