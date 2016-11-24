@@ -35,6 +35,7 @@ spec =
               "test/testdata/interpret-indirectbr.c"
               return
             let newMod = softBoundRewriteResultOf modu
+
        it "inserts sbcheck and sbsave." $
            do pendingWith "Not implemented."
               modu <-
